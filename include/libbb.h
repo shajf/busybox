@@ -2361,6 +2361,9 @@ struct bbunit_listelem {
 void bbunit_registertest(struct bbunit_listelem* test);
 void bbunit_settestfailed(void);
 
+
+
+
 #define BBUNIT_DEFINE_TEST(NAME) \
 	static void bbunit_##NAME##_test(void); \
 	static struct bbunit_listelem bbunit_##NAME##_elem = { \

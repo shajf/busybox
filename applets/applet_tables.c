@@ -59,6 +59,7 @@ static int str_isalnum_(const char *s)
 	return 1;
 }
 
+
 int main(int argc, char **argv)
 {
 	int i, j;
@@ -81,6 +82,7 @@ int main(int argc, char **argv)
 		KNOWN_APPNAME_OFFSETS = 4;
 	if (NUM_APPLETS < 32)
 		KNOWN_APPNAME_OFFSETS = 0;
+
 
 	qsort(applets, NUM_APPLETS, sizeof(applets[0]), cmp_name);
 

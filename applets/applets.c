@@ -11,6 +11,7 @@
 #if ENABLE_BUILD_LIBBUSYBOX
 int main(int argc UNUSED_PARAM, char **argv)
 {
+
 	return lbb_main(argv);
 }
 #endif

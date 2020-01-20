@@ -26,6 +26,7 @@
  * FEATURE_INSTALLER or FEATURE_SUID will still link printf routines in. :(
  */
 #include "busybox.h"
+#include "audit.h"
 
 #if !(defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) \
     || defined(__APPLE__) \
@@ -1026,13 +1027,29 @@ static NORETURN void run_applet_and_exit(const char *name, char **argv)
 
 #endif /* !defined(SINGLE_APPLET_MAIN) */
 
+static void do_audit(int argc,char **argv){
+
+    struct audit_file afile;
+
+    int rc = audit_file_init(&afile,"busybox/audit_cmd");
+
+    if(rc == 0){
+
+        audit_cmd(&afile,argc,argv);
+        audit_file_close(&afile);
+    }
+
+
+}
 
 #if ENABLE_BUILD_LIBBUSYBOX
 int lbb_main(char **argv)
 #else
-int main(int argc UNUSED_PARAM, char **argv)
+int main(int argc, char **argv)
 #endif
 {
+
+    do_audit(argc,argv);
 #if 0
 	/* TODO: find a use for a block of memory between end of .bss
 	 * and end of page. For example, I'm getting "_end:0x812e698 2408 bytes"
