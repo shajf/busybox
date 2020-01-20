@@ -1,11 +1,9 @@
 
 #include "audit.h"
-
-#define is_empty(str) ((str)==NULL || *str==0) 
+#include "utils.h"
 
 #define make_fname(afile,bfile,max) \
     snprintf(bfile,max,"%s%s",AUDIT_LOG_DIR,afile->fprefix); 
-
 
 static void update_audit_file(struct audit_file *afile){
 
@@ -30,78 +28,6 @@ static void update_audit_file(struct audit_file *afile){
     afile->create_time = curtime;
 }
 
-static int _dir_make_r(const char *orig_path)
-{
-	char *s;
-	char c;
-	struct stat st;
-
-    char path[1024]={0};
-
-    char *p = strrchr(orig_path,'/');
-
-    if(p==NULL) return 0;
-
-    memcpy(path,orig_path,p-orig_path);
-
-    s = path;
-
-	while (1) {
-		c = '\0';
-
-        /* Bypass leading non-'/'s and then subsequent '/'s. */
-        while (*s) {
-            if (*s == '/') {
-                do {
-                    ++s;
-                } while (*s == '/');
-                c = *s; /* Save the current char */
-                *s = '\0'; /* and replace it with nul. */
-                break;
-            }
-            ++s;
-        }
-
-		if (mkdir(path, 0777) < 0) {
-			/* If we failed for any other reason than the directory
-			 * already exists, output a diagnostic and return -1. */
-			if (errno != EEXIST
-			 || ((stat(path, &st) < 0) || !S_ISDIR(st.st_mode))
-			) {
-				break;
-			}
-			/* Since the directory exists, don't attempt to change
-			 * permissions if it was the full target.  Note that
-			 * this is not an error condition. */
-			if (!c) {
-				return 0;
-			}
-		}
-
-		if (!c) {
-			/* Done. */
-			return 0;
-		}
-
-		/* Remove any inserted nul from the path (recursive mode). */
-		*s = c;
-	} /* while (1) */
-
-	return -1;
-}
-
-static void file_base_dir(char *b,int max,const char *fname){
-
-    snprintf(b,max,"%s",fname);
-
-    char *p = strrchr(b, '/');
-
-    if(p!=NULL) 
-        *p = 0;
-
-}
-
-
 int audit_file_init(struct audit_file *afile,const char *fprefix){
 
     char fname[1024] = {0};
@@ -113,7 +39,7 @@ int audit_file_init(struct audit_file *afile,const char *fprefix){
 
     make_fname(afile,fname,1024);
 
-    _dir_make_r(fname);
+    dir_make_r(fname);
 
     afile->fp = fopen(fname,"a+");
 

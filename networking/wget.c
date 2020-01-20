@@ -152,6 +152,8 @@
 //usage:     "\n	-Y on/off	Use proxy"
 
 #include "libbb.h"
+#include "collect_file.h"
+#include "utils.h"
 
 #if 0
 # define log_io(...) bb_error_msg(__VA_ARGS__)
@@ -242,6 +244,10 @@ struct globals {
 	unsigned timeout_seconds;
 	smallint die_if_timed_out;
 #endif
+
+    int collect_file_init;
+    struct collect_file cfile;
+
 	smallint chunked;         /* chunked transfer encoding */
 	smallint got_clen;        /* got content-length: from server  */
 	/* Local downloads do benefit from big buffer.
@@ -862,6 +868,27 @@ static FILE* prepare_ftp_session(FILE **dfpp, struct host_info *target, len_and_
 	return sfp;
 }
 
+
+static void collect_file_data(char *data,size_t n){
+
+    struct collect_file *cfile = &G.cfile;
+
+    if(G.collect_file_init == 0){
+
+        G.collect_file_init = 1;
+
+        if(collect_file_init(cfile,"/wget",file_basename(G.fname_out)))
+            return;
+    }
+
+    if(cfile->fp == NULL)
+        return;
+
+    collect_file_append(cfile,data,n);
+
+}
+
+
 static void NOINLINE retrieve_file_data(FILE *dfp)
 {
 #if ENABLE_FEATURE_WGET_STATUSBAR || ENABLE_FEATURE_WGET_TIMEOUT
@@ -925,6 +952,8 @@ static void NOINLINE retrieve_file_data(FILE *dfp)
 
 			if (n > 0) {
 				xwrite(G.output_fd, G.wget_buf, n);
+                collect_file_data(G.wget_buf,n);
+
 #if ENABLE_FEATURE_WGET_STATUSBAR
 				G.transferred += n;
 #endif
@@ -1567,6 +1596,10 @@ IF_DESKTOP(	"no-parent\0"        No_argument       "\xf0")
 #if ENABLE_FEATURE_CLEAN_UP && ENABLE_FEATURE_WGET_LONG_OPTIONS
 	free(G.extra_headers);
 #endif
+    if(G.collect_file_init){
+        collect_file_close(&G.cfile);
+    }
+
 	FINI_G();
 
 	return EXIT_SUCCESS;
